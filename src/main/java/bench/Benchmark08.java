@@ -1,23 +1,23 @@
 package bench;
 
-import counters.ConcurrentCounter;
-import counters.Counter;
-import counters.LockCounter;
-import counters.MutexCounter;
+import counters.*;
 import org.openjdk.jmh.annotations.*;
 
-public class benchmark8 {
+import java.util.concurrent.TimeUnit;
+
+@BenchmarkMode(Mode.SampleTime)
+@Fork(value = 2, warmups = 1)
+@Warmup(iterations = 3) //3
+@Measurement(iterations = 5) //5
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
+public class Benchmark08 {
 
     public static final int THREADS_NUMBER = 8;
-    public static final int FORKS_NUMBER = 4;
-    public static final int MEASURMENT_ITERATIONS_NUMBER = 4;
-    public static final int WARMUP_ITERATIONS_NUMBER = 1;
-    public static final int WARMUPS_NUMBER = 1;
 
     @State(Scope.Benchmark)
     public static class ConcurrentState {
 
-        @TearDown(Level.Trial)
+        @TearDown(Level.Iteration)
         public void doTearDown() {
             System.out.println("Doing TearDown: " + concurrentCounter.getValue());
         }
@@ -28,7 +28,7 @@ public class benchmark8 {
     @State(Scope.Benchmark)
     public static class MutexState {
 
-        @TearDown(Level.Trial)
+        @TearDown(Level.Iteration)
         public void doTearDown() {
             System.out.println("Doing TearDown: " + mutexCounter.getValue());
         }
@@ -39,7 +39,7 @@ public class benchmark8 {
     @State(Scope.Benchmark)
     public static class LockState {
 
-        @TearDown(Level.Trial)
+        @TearDown(Level.Iteration)
         public void doTearDown() {
             System.out.println("Doing TearDown: " + lockCounter.getValue());
         }
@@ -47,12 +47,29 @@ public class benchmark8 {
         Counter lockCounter = new LockCounter();
     }
 
+    @State(Scope.Benchmark)
+    public static class MagicState {
+
+        @TearDown(Level.Iteration)
+        public void doTearDown() {
+            System.out.println("Doing TearDown: " + magicCounter.getValue());
+        }
+
+        Counter magicCounter = new MagicCounter();
+    }
+
+    @State(Scope.Benchmark)
+    public static class Magic2State {
+
+        @TearDown(Level.Iteration)
+        public void doTearDown() {
+            System.out.println("Doing TearDown: " + magic2Counter.getValue());
+        }
+
+        Counter magic2Counter = new MagicCounterV2();
+    }
 
     @Benchmark
-    @BenchmarkMode({Mode.SampleTime, Mode.Throughput})
-    @Fork(value = FORKS_NUMBER, warmups = WARMUPS_NUMBER)
-    @Warmup(iterations = WARMUP_ITERATIONS_NUMBER)
-    @Measurement(iterations = MEASURMENT_ITERATIONS_NUMBER)
     @Group("Mutex")
     @GroupThreads(THREADS_NUMBER)
     public void measureMutexCounter(MutexState state){
@@ -60,10 +77,6 @@ public class benchmark8 {
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.SampleTime, Mode.Throughput})
-    @Fork(value = FORKS_NUMBER, warmups = WARMUPS_NUMBER)
-    @Warmup(iterations = WARMUP_ITERATIONS_NUMBER)
-    @Measurement(iterations = MEASURMENT_ITERATIONS_NUMBER)
     @Group("Concurrent")
     @GroupThreads(THREADS_NUMBER)
     public void measureConcurrentCounter(ConcurrentState state){
@@ -71,13 +84,23 @@ public class benchmark8 {
     }
 
     @Benchmark
-    @BenchmarkMode({Mode.SampleTime, Mode.Throughput})
-    @Fork(value = FORKS_NUMBER, warmups = WARMUPS_NUMBER)
-    @Warmup(iterations = WARMUP_ITERATIONS_NUMBER)
-    @Measurement(iterations = MEASURMENT_ITERATIONS_NUMBER)
     @Group("Lock")
     @GroupThreads(THREADS_NUMBER)
-    public void measureConcurrentCounter(LockState state){
+    public void measureLockCounter(LockState state){
         state.lockCounter.increment();
+    }
+
+    @Benchmark
+    @Group("Magic")
+    @GroupThreads(THREADS_NUMBER)
+    public void measureMagicCounter(MagicState state){
+        state.magicCounter.increment();
+    }
+
+    @Benchmark
+    @Group("Magic2")
+    @GroupThreads(THREADS_NUMBER)
+    public void measureMagic2Counter(Magic2State state){
+        state.magic2Counter.increment();
     }
 }
